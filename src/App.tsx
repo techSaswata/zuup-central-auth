@@ -14,6 +14,7 @@ import ManageAccount from "./pages/ManageAccount";
 import AdminPage from "./pages/AdminPage";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
+import AadhaarVerification from "./pages/AadhaarVerification";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -92,6 +93,7 @@ const App = () => (
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/manage" element={<ProtectedRoute><ManageAccount /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+          <Route path="/verify-identity" element={<ProtectedRoute><AadhaarVerification /></ProtectedRoute>} />
           <Route path="/docs" element={<Docs />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

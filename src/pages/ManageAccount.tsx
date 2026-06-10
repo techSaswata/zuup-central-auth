@@ -23,6 +23,51 @@ export default function ManageAccount() {
 
         <h1 style={{ fontSize: "28px", fontWeight: 700, marginBottom: "24px" }}>Manage Account</h1>
 
+        {/* Aadhaar Verification Banner */}
+        <div style={{ 
+          marginBottom: "24px", 
+          padding: "24px", 
+          background: "rgba(255,255,255,0.02)", 
+          borderRadius: "16px", 
+          border: "1px solid rgba(255,255,255,0.08)", 
+          display: "flex", 
+          flexDirection: "row",
+          justifyContent: "space-between", 
+          alignItems: "center",
+          gap: "24px"
+        }}>
+          <div style={{ flex: 1, fontFamily: "'Kalam', 'Comic Sans MS', cursive" }}>
+            <h2 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "8px", color: "#f8f9fa" }}>
+              Verify Your Identity
+            </h2>
+            <p style={{ fontSize: "14px", color: "#d1d5db", lineHeight: "1.5", margin: 0 }}>
+              To participate in Zuup events in India, identity verification via Aadhaar is mandatory. Rest assured, we prioritize your privacy—we only cross-check your data locally using UIDAI certificates. We do not store your full Aadhaar data on our servers; only the last 4 digits are securely saved. No sensitive information leaves your device during this process.
+            </p>
+          </div>
+          <button 
+            onClick={() => navigate("/verify-identity")}
+            style={{ 
+              background: "#ef4444", 
+              color: "white", 
+              padding: "16px 24px", 
+              borderRadius: "999px", 
+              border: "none",
+              fontSize: "15px", 
+              fontWeight: "bold",
+              fontFamily: "'Kalam', 'Comic Sans MS', cursive",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              boxShadow: "0 4px 14px 0 rgba(239, 68, 68, 0.39)",
+              transition: "transform 0.1s"
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
+            onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+            onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+          >
+            Scan your Aadhaar now
+          </button>
+        </div>
+
         <div style={{ marginBottom: "24px", padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <p style={{ margin: "0 0 4px", fontWeight: 600, fontSize: 15 }}>Slack Integration</p>
