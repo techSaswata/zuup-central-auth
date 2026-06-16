@@ -284,6 +284,7 @@ export default function Authorize() {
         scopes: req.scopes,
         code_challenge: req.code_challenge,
         code_challenge_method: req.code_challenge_method,
+        nonce: req.nonce,
       }),
     });
 
