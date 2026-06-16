@@ -90,6 +90,89 @@ create index if not exists oauth_authorization_codes_used_idx
 	on public.oauth_authorization_codes (used);
 ```
 
+## OpenID Connect Migration (required)
+
+The token endpoint now issues real OIDC `id_token`s (carrying `nonce` and
+`auth_time`) and supports the `refresh_token` grant for `offline_access`. The
+migration ships as [`supabase/migrations/20260616000000_oidc_completion.sql`](supabase/migrations/20260616000000_oidc_completion.sql)
+(run via `supabase db push`); the same SQL is reproduced below. The workers
+degrade gracefully if it hasn't run yet — authorization codes are inserted
+without `nonce`/`auth_time`, and refresh-token storage is skipped — so a deploy
+can't take the login flow down, but `offline_access` and the `nonce`/`auth_time`
+claims only work once it's applied.
+
+```sql
+-- nonce + auth_time so the id_token can satisfy OIDC replay protection
+alter table public.oauth_authorization_codes add column if not exists nonce text;
+alter table public.oauth_authorization_codes add column if not exists auth_time bigint;
+
+-- refresh tokens (offline_access) with rotation + reuse detection
+create table if not exists public.oauth_refresh_tokens (
+	id uuid primary key default gen_random_uuid(),
+	token_hash text not null unique,   -- SHA-256 of the token; the raw token is never stored
+	client_id text not null,
+	user_id text not null,
+	scopes jsonb not null default '[]'::jsonb,
+	nonce text,
+	auth_time bigint,
+	expires_at timestamptz not null,
+	revoked boolean not null default false,
+	rotated_to text,                   -- token_hash of the successor token (rotation chain)
+	created_at timestamptz not null default now(),
+	consumed_at timestamptz
+);
+
+create index if not exists oauth_refresh_tokens_client_id_idx
+	on public.oauth_refresh_tokens (client_id);
+create index if not exists oauth_refresh_tokens_user_id_idx
+	on public.oauth_refresh_tokens (user_id);
+create index if not exists oauth_refresh_tokens_expires_at_idx
+	on public.oauth_refresh_tokens (expires_at);
+```
+
+### Token endpoint behavior
+
+- **Client authentication is mandatory for confidential clients.** Any
+  `oauth_clients` row with a `client_secret` must present that secret (via
+  HTTP Basic or `client_secret` in the body) on every token request. A missing
+  or wrong secret returns `401 invalid_client`. Clients with no registered
+  secret are treated as public and **must** use PKCE.
+- **PKCE is `S256`-only.** `plain` is no longer accepted or advertised. Public
+  clients must send a `code_challenge` on `/authorize`.
+- **`id_token`** is returned to **confidential clients** whenever the `openid`
+  scope is granted. It is signed `HS256` with the client's secret (so the
+  relying party verifies it with the credential it already holds) and includes
+  `iss`, `sub`, `aud`, `iat`, `exp`, `auth_time`, `at_hash`, `nonce` (when
+  supplied), and the scope-gated `profile`/`email` claims. **Public clients**
+  (no secret) receive an `access_token` only and resolve identity via
+  `/api/oauth/userinfo` — see *Follow-up* below.
+- **`refresh_token`** is returned when `offline_access` is granted. Tokens are
+  stored hashed and **rotate on every use**; rotation is atomic (a conditional
+  "claim" of the old token), so concurrent reuse can't double-spend. Presenting
+  a previously-rotated token triggers **reuse detection** and revokes the whole
+  token family for that client+user. A sliding 30-day window is hard-capped by a
+  90-day absolute lifetime anchored to the original authentication.
+- **`GET/POST /api/oauth/userinfo`** returns the `sub` plus the scope-gated
+  profile and email claims for a valid bearer **access token**. id_tokens and
+  other non-access JWTs are rejected (`token_use` is enforced).
+
+### Follow-up: asymmetric id_token signing for public clients
+
+OIDC forbids symmetric (`HS256`) id_token signatures for public clients because
+there is no shared secret to verify with. Rather than hand a public SPA an
+unverifiable token, this implementation issues public clients an `access_token`
+only and points them at `/userinfo`. The clean long-term fix is `RS256`/`ES256`
+signing with a published `jwks_uri` so any OIDC library can verify id_tokens for
+both client types — tracked as a follow-up.
+
+A client is **confidential** (and therefore receives id_tokens) when it has a
+row in `oauth_clients` with a non-empty `client_secret`, or matches the
+`ZUUP_CLIENT_ID`/`ZUUP_CLIENT_SECRET` env pair. First-party apps that want
+id_tokens must be seeded with a secret; the static client registry holds
+metadata only. A client with no secret is public and must use S256 PKCE. If the
+client-secret lookup itself fails (e.g. a Supabase outage), the token request is
+rejected rather than downgraded to public — credential resolution fails closed.
+
 ## SQL for Mailing Address and Extra Profile Fields
 
 Supabase manages auth.users directly, so you should not alter auth.users table structure for custom columns.
