@@ -39,6 +39,17 @@ export function generateOpaqueToken(bytes = 32) {
   return crypto.randomBytes(bytes).toString("hex");
 }
 
+/**
+ * Constant-time secret comparison. Hashes both sides so the comparison is
+ * length-independent and never short-circuits on the first differing byte.
+ */
+export function secretsMatch(provided, expected) {
+  if (typeof provided !== "string" || typeof expected !== "string") return false;
+  const a = crypto.createHash("sha256").update(provided).digest();
+  const b = crypto.createHash("sha256").update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
 function base64UrlEncode(input) {
   return Buffer.from(input)
     .toString("base64")
@@ -180,7 +191,10 @@ export async function resolveClientCredentials(req, bodyClientId) {
 
     const expected = map[clientId];
     if (expected) {
-      if (clientSecret && clientSecret !== expected) {
+      if (!clientSecret) {
+        return { error: "invalid_client", msg: "Client authentication required" };
+      }
+      if (!secretsMatch(clientSecret, expected)) {
         return { error: "invalid_client", msg: "Invalid client_secret" };
       }
       return { clientId, clientSecret: expected };
@@ -189,7 +203,10 @@ export async function resolveClientCredentials(req, bodyClientId) {
 
   const dbSecret = await getClientSecretFromDb(clientId);
   if (dbSecret) {
-    if (clientSecret && clientSecret !== dbSecret) {
+    if (!clientSecret) {
+      return { error: "invalid_client", msg: "Client authentication required for confidential client" };
+    }
+    if (!secretsMatch(clientSecret, dbSecret)) {
       return { error: "invalid_client", msg: "Invalid client_secret" };
     }
     return { clientId, clientSecret: dbSecret };
@@ -203,7 +220,10 @@ export async function resolveClientCredentials(req, bodyClientId) {
         hint: "Remove ZUUP_CLIENT_ID/ZUUP_CLIENT_SECRET when using multi-client mode",
       };
     }
-    if (clientSecret && clientSecret !== singleClientSecret) {
+    if (!clientSecret) {
+      return { error: "invalid_client", msg: "Client authentication required" };
+    }
+    if (!secretsMatch(clientSecret, singleClientSecret)) {
       return { error: "invalid_client", msg: "client_secret mismatch" };
     }
     return { clientId: singleClientId, clientSecret: singleClientSecret };
