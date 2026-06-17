@@ -52,7 +52,7 @@ export function useAuth() {
   }, []);
 
   const signIn = () => {
-    const myUrl = window.location.href;
+    const myUrl = window.location.origin + '/profile';
     window.location.href = `https://auth.zuup.dev/login?redirect_to=${encodeURIComponent(myUrl)}`;
   };
 
