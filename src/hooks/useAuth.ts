@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export interface User {
   id: string;
@@ -16,9 +17,24 @@ export function useAuth() {
     let cancelled = false;
 
     const checkAuth = async () => {
+      // Extract token from URL if present (from cross-origin redirect)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token');
+      if (urlToken) {
+        localStorage.setItem('zuup_token', urlToken);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      const token = localStorage.getItem('zuup_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       try {
         const res = await fetch('https://auth.zuup.dev/api/me', {
-          credentials: 'include'
+          credentials: 'include',
+          headers
         });
         
         if (cancelled) return;
@@ -27,6 +43,13 @@ export function useAuth() {
           const data = await res.json();
           setUser(data.user);
           setSession({ user: data.user }); // Provide a mock session object for compatibility
+          
+          if (token) {
+            await supabase.auth.setSession({
+              access_token: token,
+              refresh_token: token
+            });
+          }
         } else {
           setUser(null);
           setSession(null);
@@ -57,6 +80,7 @@ export function useAuth() {
   };
 
   const signOut = () => {
+    localStorage.removeItem('zuup_token');
     const myUrl = window.location.origin;
     window.location.href = `https://auth.zuup.dev/api/logout?redirect_to=${encodeURIComponent(myUrl)}`;
   };
