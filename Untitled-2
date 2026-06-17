@@ -1,0 +1,15 @@
+# 
+
+{
+  "aadhaar_last4": "7067",
+  "country": "India",
+  "dob": "07/11/2008",
+  "email": "jagritsachdev07@gmail.com",
+  "email_verified": true,
+  "full_name": "Jagrit Sachdev",
+  "gender": "M",
+  "phone": "8851844602",
+  "phone_verified": true,
+  "sub": "cf0022ec-d4d8-4b0b-ae63-a388e3dd10bf",
+  "verification_method": "meripehchaan"
+}

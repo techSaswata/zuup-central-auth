@@ -41,8 +41,7 @@ const APP_EXAMPLES = [
       "https://www.zuup.dev/callback",
       "https://code.zuup.dev/callback",
       "https://watch.zuup.dev/auth/zuup/callback",
-      "http://localhost:3000/callback",
-      "http://localhost:5173/callback",
+      "https://dashboard.zuup.dev/callback",
     ],
   },
   {
@@ -53,21 +52,20 @@ const APP_EXAMPLES = [
       "https://code.zuup.dev/callback",
       "https://code.zuup.dev/auth/callback",
       "https://watch.zuup.dev/auth/zuup/callback",
-      "http://localhost:3000/callback",
-      "http://localhost:5173/callback",
+      "https://dashboard.zuup.dev/callback",
     ],
   },
   {
     name: "ZuupTime",
     clientId: "zuuptime",
     firstParty: true,
-    redirects: ["https://time.zuup.dev/callback", "https://time.zuup.dev/auth/callback", "http://localhost:3000/callback"],
+    redirects: ["https://time.zuup.dev/callback", "https://time.zuup.dev/auth/callback", "https://dashboard.zuup.dev/callback"],
   },
   {
     name: "Zuup",
     clientId: "zuupdev",
     firstParty: true,
-    redirects: ["https://www.zuup.dev/callback", "https://zuup.dev/callback", "http://localhost:3000/callback"],
+    redirects: ["https://www.zuup.dev/callback", "https://zuup.dev/callback", "https://dashboard.zuup.dev/callback"],
   },
 ];
 

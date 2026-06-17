@@ -15,6 +15,9 @@ import AdminPage from "./pages/AdminPage";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 import AadhaarVerification from "./pages/AadhaarVerification";
+import MobileScan from "./pages/MobileScan";
+import Network from "./pages/Network";
+import ZuupCard from "./pages/ZuupCard";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -94,6 +97,9 @@ const App = () => (
           <Route path="/manage" element={<ProtectedRoute><ManageAccount /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
           <Route path="/verify-identity" element={<ProtectedRoute><AadhaarVerification /></ProtectedRoute>} />
+          <Route path="/mobile-scan" element={<MobileScan />} />
+          <Route path="/network" element={<Network />} />
+          <Route path="/card" element={<ProtectedRoute><ZuupCard /></ProtectedRoute>} />
           <Route path="/docs" element={<Docs />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

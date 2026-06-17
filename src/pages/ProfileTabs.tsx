@@ -35,16 +35,17 @@ export function TabMyInfo() {
   const fileRef = useRef<HTMLInputElement>(null);
   const meta = user?.user_metadata || {};
 
+  const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(meta.full_name || meta.name || "");
   const [lastName, setLastName] = useState(meta.last_name || "");
   const [country, setCountry] = useState(meta.country || "");
   const [phoneCode, setPhoneCode] = useState(meta.phone_country_code || "+91 (IN)");
   const [phone, setPhone] = useState(meta.phone || "");
-  const [addr1, setAddr1] = useState(meta.address_line1 || "");
-  const [addr2, setAddr2] = useState(meta.address_line2 || "");
-  const [city, setCity] = useState(meta.city || "");
-  const [state, setState] = useState(meta.state_region || "");
-  const [postal, setPostal] = useState(meta.postal_code || "");
+  const [addr1, setAddr1] = useState(meta.address_line1 || meta.mailing_address?.line1 || "");
+  const [addr2, setAddr2] = useState(meta.address_line2 || meta.mailing_address?.line2 || "");
+  const [city, setCity] = useState(meta.city || meta.mailing_address?.city || "");
+  const [state, setState] = useState(meta.state_region || meta.mailing_address?.state_region || "");
+  const [postal, setPostal] = useState(meta.postal_code || meta.mailing_address?.postal_code || "");
   const [username, setUsername] = useState(meta.username || "");
   const [email, setEmail] = useState(user?.email || "");
   const [avatar, setAvatar] = useState(meta.avatar_url || "");
@@ -62,11 +63,11 @@ export function TabMyInfo() {
       if (m.country) setCountry(m.country);
       if (m.phone_country_code) setPhoneCode(m.phone_country_code);
       if (m.phone) setPhone(m.phone);
-      if (m.address_line1) setAddr1(m.address_line1);
-      if (m.address_line2) setAddr2(m.address_line2);
-      if (m.city) setCity(m.city);
-      if (m.state_region) setState(m.state_region);
-      if (m.postal_code) setPostal(m.postal_code);
+      if (m.address_line1 || m.mailing_address?.line1) setAddr1(m.address_line1 || m.mailing_address?.line1 || "");
+      if (m.address_line2 || m.mailing_address?.line2) setAddr2(m.address_line2 || m.mailing_address?.line2 || "");
+      if (m.city || m.mailing_address?.city) setCity(m.city || m.mailing_address?.city || "");
+      if (m.state_region || m.mailing_address?.state_region) setState(m.state_region || m.mailing_address?.state_region || "");
+      if (m.postal_code || m.mailing_address?.postal_code) setPostal(m.postal_code || m.mailing_address?.postal_code || "");
       if (m.username) setUsername(m.username);
       if (m.avatar_url) setAvatar(m.avatar_url);
     }
@@ -104,6 +105,7 @@ export function TabMyInfo() {
       } else {
         toast.success("Profile saved");
       }
+      setIsEditing(false);
     } catch (err: any) { toast.error(err.message || "Save failed"); }
     finally { setSaving(false); }
   };
@@ -112,8 +114,28 @@ export function TabMyInfo() {
   const inpStyle: React.CSSProperties = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#e8eaf0" };
   const sel = { ...inpStyle, width: "100%", height: 40, borderRadius: 8, padding: "0 10px" };
 
+  const DataItem = ({ label, value }: { label: string, value: string }) => (
+    <div>
+      <Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 4, display: "block" }}>{label}</Label>
+      <p style={{ margin: 0, fontSize: 14, color: "#f1f3f8", minHeight: 20 }}>{value || "—"}</p>
+    </div>
+  );
+
   return (
     <div style={{ display: "grid", gap: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <p style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Profile Settings</p>
+        {!isEditing ? (
+          <Button onClick={() => setIsEditing(true)} variant="outline" size="sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#e8eaf0" }}>
+            Edit Profile
+          </Button>
+        ) : (
+          <Button onClick={() => setIsEditing(false)} variant="ghost" size="sm" style={{ color: "#9ca3af" }}>
+            Cancel
+          </Button>
+        )}
+      </div>
+
       {/* Avatar row */}
       <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 24 }}>
         <p style={{ margin: "0 0 16px", fontWeight: 600, fontSize: 16 }}>Profile photo & name</p>
@@ -123,16 +145,18 @@ export function TabMyInfo() {
               ? <img src={avatar} alt={displayName} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }} />
               : <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#e8425a,#f06080)", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 28 }}>{initial}</div>
             }
-            <button onClick={() => fileRef.current?.click()} disabled={uploading}
-              style={{ position: "absolute", right: -4, bottom: -4, width: 28, height: 28, borderRadius: "50%", border: "2px solid #0d0f14", background: "#e8425a", color: "white", display: "grid", placeItems: "center", cursor: "pointer" }}>
-              {uploading ? <RefreshCw size={12} className="animate-spin" /> : <Camera size={12} />}
-            </button>
+            {isEditing && (
+              <button onClick={() => fileRef.current?.click()} disabled={uploading}
+                style={{ position: "absolute", right: -4, bottom: -4, width: 28, height: 28, borderRadius: "50%", border: "2px solid #0d0f14", background: "#e8425a", color: "white", display: "grid", placeItems: "center", cursor: "pointer" }}>
+                {uploading ? <RefreshCw size={12} className="animate-spin" /> : <Camera size={12} />}
+              </button>
+            )}
             <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatar} style={{ display: "none" }} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600 }}>{displayName} {lastName}</p>
             <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 12 }}>{user?.email}</p>
-            <p style={{ margin: 0, fontSize: 11, color: "#4b5563" }}>JPG or PNG · max 2MB</p>
+            {isEditing && <p style={{ margin: 0, fontSize: 11, color: "#4b5563" }}>JPG or PNG · max 2MB</p>}
           </div>
         </div>
       </div>
@@ -140,65 +164,96 @@ export function TabMyInfo() {
       {/* Personal info */}
       <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 24 }}>
         <p style={{ margin: "0 0 16px", fontWeight: 600, fontSize: 16 }}>Personal info</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>First name</Label>
-            <input className={inp} style={inpStyle} value={fullName} onChange={e => setFullName(e.target.value)} placeholder="First name" /></div>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Last name</Label>
-            <input className={inp} style={inpStyle} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" /></div>
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Username</Label>
-          <input className={inp} style={inpStyle} value={username} onChange={e => setUsername(e.target.value)} placeholder="your-handle" />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Email</Label>
-            <div style={{ position: "relative" }}>
-              <Mail size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#6b7280" }} />
-              <input className={inp} style={{ ...inpStyle, paddingLeft: 30 }} type="email" value={email} onChange={e => setEmail(e.target.value)} />
+        {!isEditing ? (
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <DataItem label="First name" value={fullName} />
+              <DataItem label="Last name" value={lastName} />
             </div>
-            {email !== user?.email && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#e8425a" }}>Confirmation will be sent</p>}
+            <DataItem label="Username" value={username} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <DataItem label="Email" value={email} />
+              <DataItem label="Country" value={country} />
+            </div>
+            <DataItem label="Phone number" value={phone ? `${phoneCode} ${phone}` : ""} />
           </div>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Country</Label>
-            <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...sel } as React.CSSProperties}>
-              <option value="">Select country</option>
-              {COUNTRY_LIST.map(c => <option key={c} value={c} style={{ color: "#111" }}>{c}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 12, marginTop: 12 }}>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Code</Label>
-            <select value={phoneCode} onChange={e => setPhoneCode(e.target.value)} style={{ ...sel } as React.CSSProperties}>
-              {MOBILE_CODES.map(c => <option key={c} value={c} style={{ color: "#111" }}>{c}</option>)}
-            </select>
-          </div>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Phone number</Label>
-            <input className={inp} style={inpStyle} value={phone} onChange={e => setPhone(e.target.value)} placeholder="9876543210" />
-          </div>
-        </div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>First name</Label>
+                <input className={inp} style={inpStyle} value={fullName} onChange={e => setFullName(e.target.value)} placeholder="First name" /></div>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Last name</Label>
+                <input className={inp} style={inpStyle} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" /></div>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Username</Label>
+              <input className={inp} style={inpStyle} value={username} onChange={e => setUsername(e.target.value)} placeholder="your-handle" />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Email</Label>
+                <div style={{ position: "relative" }}>
+                  <Mail size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#6b7280" }} />
+                  <input className={inp} style={{ ...inpStyle, paddingLeft: 30 }} type="email" value={email} onChange={e => setEmail(e.target.value)} />
+                </div>
+                {email !== user?.email && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#e8425a" }}>Confirmation will be sent</p>}
+              </div>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Country</Label>
+                <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...sel } as React.CSSProperties}>
+                  <option value="">Select country</option>
+                  {COUNTRY_LIST.map(c => <option key={c} value={c} style={{ color: "#111" }}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 12, marginTop: 12 }}>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Code</Label>
+                <select value={phoneCode} onChange={e => setPhoneCode(e.target.value)} style={{ ...sel } as React.CSSProperties}>
+                  {MOBILE_CODES.map(c => <option key={c} value={c} style={{ color: "#111" }}>{c}</option>)}
+                </select>
+              </div>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Phone number</Label>
+                <input className={inp} style={inpStyle} value={phone} onChange={e => setPhone(e.target.value)} placeholder="9876543210" />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Address */}
       <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 24 }}>
         <p style={{ margin: "0 0 16px", fontWeight: 600, fontSize: 16 }}>Mailing address</p>
-        <div style={{ display: "grid", gap: 12 }}>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Address line 1</Label>
-            <input className={inp} style={inpStyle} value={addr1} onChange={e => setAddr1(e.target.value)} placeholder="Street and number" /></div>
-          <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Address line 2 (optional)</Label>
-            <input className={inp} style={inpStyle} value={addr2} onChange={e => setAddr2(e.target.value)} placeholder="Apartment, suite, landmark" /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-            <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>City</Label>
-              <input className={inp} style={inpStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="City" /></div>
-            <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>State / region</Label>
-              <input className={inp} style={inpStyle} value={state} onChange={e => setState(e.target.value)} placeholder="State" /></div>
-            <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Postal code</Label>
-              <input className={inp} style={inpStyle} value={postal} onChange={e => setPostal(e.target.value)} placeholder="ZIP / PIN" /></div>
+        {!isEditing ? (
+          <div style={{ display: "grid", gap: 16 }}>
+            <DataItem label="Address line 1" value={addr1} />
+            {addr2 && <DataItem label="Address line 2" value={addr2} />}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+              <DataItem label="City" value={city} />
+              <DataItem label="State / region" value={state} />
+              <DataItem label="Postal code" value={postal} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Address line 1</Label>
+              <input className={inp} style={inpStyle} value={addr1} onChange={e => setAddr1(e.target.value)} placeholder="Street and number" /></div>
+            <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Address line 2 (optional)</Label>
+              <input className={inp} style={inpStyle} value={addr2} onChange={e => setAddr2(e.target.value)} placeholder="Apartment, suite, landmark" /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>City</Label>
+                <input className={inp} style={inpStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="City" /></div>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>State / region</Label>
+                <input className={inp} style={inpStyle} value={state} onChange={e => setState(e.target.value)} placeholder="State" /></div>
+              <div><Label style={{ fontSize: 11, color: "#6b7280", marginBottom: 6, display: "block" }}>Postal code</Label>
+                <input className={inp} style={inpStyle} value={postal} onChange={e => setPostal(e.target.value)} placeholder="ZIP / PIN" /></div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <Button onClick={handleSave} disabled={saving} style={{ background: "linear-gradient(135deg,#e8425a,#f06080)", border: "none", color: "white", fontWeight: 600, height: 42, borderRadius: 10, cursor: "pointer" }}>
-        {saving ? <><RefreshCw size={14} className="animate-spin" style={{ marginRight: 6 }} />Saving…</> : <><Check size={14} style={{ marginRight: 6 }} />Save all changes</>}
-      </Button>
+      {isEditing && (
+        <Button onClick={handleSave} disabled={saving} style={{ background: "linear-gradient(135deg,#e8425a,#f06080)", border: "none", color: "white", fontWeight: 600, height: 42, borderRadius: 10, cursor: "pointer" }}>
+          {saving ? <><RefreshCw size={14} className="animate-spin" style={{ marginRight: 6 }} />Saving…</> : <><Check size={14} style={{ marginRight: 6 }} />Save all changes</>}
+        </Button>
+      )}
     </div>
   );
 }

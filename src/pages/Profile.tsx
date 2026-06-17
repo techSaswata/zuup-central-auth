@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuditLog, logAuditEvent, getRegisteredClients, type AuditEvent } from "@/lib/oauth";
 import { supabase } from "@/lib/supabase";
-import { Search, Grid3x3, LogOut, Settings, Users, Shield, Clock, Plus, Cpu, Sparkles, Lightbulb, Activity, Database, Server, Globe, Calendar, ArrowRight, MapPin, Video, Palette, Triangle, HeartHandshake, Award, Mail } from "lucide-react";
+import { Search, Grid3x3, LogOut, Settings, Users, Shield, Clock, Plus, Cpu, Sparkles, Lightbulb, Activity, Database, Server, Globe, Calendar, ArrowRight, MapPin, Video, Palette, Triangle, HeartHandshake, Award, Mail, AlertCircle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import {
@@ -353,13 +353,44 @@ export default function Profile() {
             </div>
 
             {/* Security & Access (Moved down left column) */}
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", padding: "20px", display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(16, 185, 129, 0.1)", color: "#10b981", display: "grid", placeItems: "center" }}>
-                <Shield size={20} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", padding: "20px", display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(16, 185, 129, 0.1)", color: "#10b981", display: "grid", placeItems: "center" }}>
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Security Status</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#71717a" }}>Authorized via {lastSignInApp}</p>
+                </div>
               </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Security Status</p>
-                <p style={{ margin: "4px 0 0", fontSize: 12, color: "#71717a" }}>Authorized via {lastSignInApp}</p>
+              
+              <div 
+                onClick={() => navigate("/manage")}
+                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", padding: "20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+              >
+                {meta.aadhaar_last4 ? (
+                  <>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(16, 185, 129, 0.1)", color: "#10b981", display: "grid", placeItems: "center" }}>
+                      <Shield size={20} />
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Identity Verified</p>
+                      <p style={{ margin: "4px 0 0", fontSize: 12, color: "#10b981", fontFamily: "monospace" }}>XXXX XXXX {meta.aadhaar_last4}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", display: "grid", placeItems: "center" }}>
+                      <AlertCircle size={20} />
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Identity Unverified</p>
+                      <p style={{ margin: "4px 0 0", fontSize: 12, color: "#ef4444" }}>Click to verify via Aadhaar</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -453,6 +484,64 @@ export default function Profile() {
               <p style={{ margin: "0 0 8px", fontWeight: 600, fontSize: 18, color: "#e8eaf0" }}>
                 What's going on at Zuup
               </p>
+
+              {/* Zuup ID Card CTA */}
+              <div
+                onClick={() => navigate("/card")}
+                style={{
+                  cursor: "pointer",
+                  background: "linear-gradient(135deg, rgba(255,61,127,0.08) 0%, rgba(139,92,246,0.06) 100%)",
+                  border: "1px solid rgba(255,61,127,0.25)",
+                  borderRadius: "24px",
+                  padding: "20px 24px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  transition: "all 0.25s",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,61,127,0.14) 0%, rgba(139,92,246,0.1) 100%)";
+                  e.currentTarget.style.borderColor = "rgba(255,61,127,0.4)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 12px 40px rgba(255,61,127,0.15)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,61,127,0.08) 0%, rgba(139,92,246,0.06) 100%)";
+                  e.currentTarget.style.borderColor = "rgba(255,61,127,0.25)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {/* Pink glow blob */}
+                <div style={{ position: "absolute", right: "-20px", top: "-20px", width: "100px", height: "100px", background: "radial-gradient(circle, rgba(255,61,127,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg, rgba(255,61,127,0.2), rgba(139,92,246,0.2))",
+                    border: "1px solid rgba(255,61,127,0.3)",
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: "22px",
+                  }}>
+                    🪪
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 700, color: "#e8eaf0", fontFamily: "'Caveat', cursive" }}>
+                      View Your Zuup Card
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "13px", color: "#a1a1aa" }}>
+                      Your 3D identity card — with QR code &amp; profile link.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ background: "linear-gradient(135deg, #FF3D7F, #a855f7)", color: "#fff", padding: "8px 16px", borderRadius: "100px", fontSize: "13px", fontWeight: 700, flexShrink: 0, boxShadow: "0 4px 12px rgba(255,61,127,0.3)" }}>
+                  Open Card
+                </div>
+              </div>
 
               {/* Join Slack Community Card */}
               <a href="https://faraway.zuup.dev/slack" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block", width: "100%" }}>

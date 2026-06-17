@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { RefreshCw, Search, ChevronDown, ChevronUp, Copy, Check, Users, Shield, Clock, X, Mail, Edit, Trash2, Calendar, Plus, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { RefreshCw, Search, ChevronDown, ChevronUp, Copy, Check, Users, Shield, Clock, X, Mail, Edit, Trash2, Calendar, Plus, ExternalLink, Image as ImageIcon, ShieldOff } from "lucide-react";
 
 interface SupabaseUser {
   id: string;
@@ -110,6 +110,32 @@ function MetaDrawer({ user, onClose, adminClient, refreshUsers }: { user: Supaba
     setLoadingAction(false);
   };
 
+  const handleUnlinkAadhaar = async () => {
+    if (!adminClient) return;
+    if (!window.confirm(`Are you sure you want to remove Aadhaar verification data for ${user.email}? This will un-verify their account.`)) return;
+    setLoadingAction(true);
+    try {
+      const newMeta: any = { ...user.user_metadata };
+      newMeta.aadhaar_last4 = null;
+      newMeta.address_line1 = null;
+      newMeta.address_line2 = null;
+      newMeta.city = null;
+      newMeta.state_region = null;
+      newMeta.postal_code = null;
+      
+      const { error } = await adminClient.auth.admin.updateUserById(user.id, {
+        user_metadata: newMeta
+      });
+      if (error) throw error;
+      toast.success("Aadhaar data removed successfully.");
+      refreshUsers();
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to remove Aadhaar data");
+    }
+    setLoadingAction(false);
+  };
+
   const btnStyle: React.CSSProperties = {
     display: "flex", alignItems: "center", gap: 6,
     background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
@@ -135,8 +161,13 @@ function MetaDrawer({ user, onClose, adminClient, refreshUsers }: { user: Supaba
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Avatar user={user} />
             <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
                 {(user.user_metadata?.full_name || user.user_metadata?.name || user.email || "Unknown") as string}
+                {user.user_metadata?.aadhaar_last4 && (
+                  <span style={{ background: "rgba(16, 185, 129, 0.1)", color: "#10b981", padding: "2px 6px", borderRadius: 4, fontSize: 11, fontWeight: "bold", fontFamily: "monospace" }}>
+                    ✓ UIDAI: {user.user_metadata.aadhaar_last4 as string}
+                  </span>
+                )}
               </p>
               <p style={{ margin: 0, color: "#6b7280", fontSize: 12 }}>{user.email}</p>
             </div>
@@ -156,6 +187,11 @@ function MetaDrawer({ user, onClose, adminClient, refreshUsers }: { user: Supaba
           <button onClick={handleDelete} disabled={loadingAction} style={{ ...btnStyle, background: "rgba(232,66,90,0.1)", color: "#e8425a", border: "1px solid rgba(232,66,90,0.2)" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(232,66,90,0.2)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(232,66,90,0.1)"}>
             <Trash2 size={14} /> Delete
           </button>
+          {user.user_metadata?.aadhaar_last4 && (
+            <button onClick={handleUnlinkAadhaar} disabled={loadingAction} style={{ ...btnStyle, background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.2)" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(245, 158, 11, 0.2)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(245, 158, 11, 0.1)"}>
+              <ShieldOff size={14} /> Unlink Aadhaar
+            </button>
+          )}
         </div>
 
         {isEditing && (
@@ -439,10 +475,16 @@ export default function AdminPanel() {
     setError(null);
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://qnapwukqhybziduhzpow.supabase.co";
-    const serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+    let serviceKey = sessionStorage.getItem("admin_service_key");
+    if (!serviceKey) {
+      serviceKey = prompt("Developer Access: Please enter the Supabase Service Role Key to unlock the Admin Panel.");
+      if (serviceKey) {
+        sessionStorage.setItem("admin_service_key", serviceKey);
+      }
+    }
 
     if (!serviceKey) {
-      setError("Missing VITE_SUPABASE_SERVICE_ROLE_KEY environment variable. Required for local Admin Panel.");
+      setError("Service Role Key is required to access the Admin Panel. Refresh to enter the key.");
       setLoading(false);
       return;
     }
@@ -624,7 +666,14 @@ export default function AdminPanel() {
                         </td>
                         <td style={cell}>
                           <p style={{ margin: "0 0 2px", fontWeight: 600, fontSize: 12 }}>{name || "—"}</p>
-                          <p style={{ margin: 0, color: "#6b7280", fontSize: 10, fontFamily: "monospace" }}>{u.id.slice(0, 18)}…</p>
+                          <p style={{ margin: 0, color: "#6b7280", fontSize: 10, fontFamily: "monospace", display: "flex", alignItems: "center", gap: 6 }}>
+                            {u.id.slice(0, 18)}…
+                            {u.user_metadata?.aadhaar_last4 && (
+                              <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "1px 6px", borderRadius: 4, fontWeight: "bold", fontSize: 9 }}>
+                                UIDAI {u.user_metadata.aadhaar_last4 as string}
+                              </span>
+                            )}
+                          </p>
                         </td>
                         <td style={{ ...cell, color: "#9ca3af" }}>{new Date(u.created_at).toLocaleDateString()}</td>
                         <td style={{ ...cell, color: "#9ca3af" }}>
