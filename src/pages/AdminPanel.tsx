@@ -474,7 +474,7 @@ export default function AdminPanel() {
     setLoading(true);
     setError(null);
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://qnapwukqhybziduhzpow.supabase.co";
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     let serviceKey = sessionStorage.getItem("admin_service_key");
     if (!serviceKey) {
       serviceKey = prompt("Developer Access: Please enter the Supabase Service Role Key to unlock the Admin Panel.");
