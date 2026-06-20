@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const ADMIN_EMAILS = ["jagrit@zuup.dev", "admin@zuup.dev"];
+const ADMIN_EMAILS: string[] = [];
 
 const ZUUP_APPS = [
   { name: "Zuup", url: "https://zuup.dev", icon: Globe, color: "#e8425a" },
